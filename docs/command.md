@@ -1,4 +1,5 @@
-1. 컨테이너 생성
+# 1. 컨테이너 생성
+```bash
 docker run -it \
   --name codyssey-week1 \
   -p 20022:20022 \
@@ -11,21 +12,26 @@ Unable to find image 'ubuntu:22.04' locally
 Digest: sha256:962f6cadeae0ea6284001009daa4cc9a8c37e75d1f5191cf0eb83fe565b63dd7
 Status: Downloaded newer image for ubuntu:22.04
 root@09a31377137e:/# 
+```
 
-2. 우분투 환경세팅
+# 2. 우분투 환경세팅
+```bash
 apt update
 apt install -y openssh-server sudo nano vim iproute2 net-tools cron ufw acl procps
+```
 
-3. workspace 확인
+
+# 3. workspace 확인
+```bash
 root@09a31377137e:/# ls
 bin  boot  dev  etc  home  lib  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var  workspace
 root@09a31377137e:/# cd workspace/
 root@09a31377137e:/workspace# ls
 README.md  app  docker  docs  evidence  scripts
+```
 
-
-4. ssh 설정
-
+# 4. ssh 설정
+```bash
 SSH 서버 설정파일 열기
 nano /etc/ssh/sshd_config
 
@@ -79,9 +85,9 @@ id agent-test
 uid=1000(agent-admin) gid=1000(agent-admin) groups=1000(agent-admin)
 uid=1001(agent-dev) gid=1001(agent-dev) groups=1001(agent-dev)
 uid=1002(agent-test) gid=1002(agent-test) groups=1002(agent-test)
-
-5. SSH 실제 접속 테스트
-
+```
+# 5. SSH 실제 접속 테스트
+```bash
 새로운 터미널 open
 (base) melon@munseongon-ui-MacBookAir codyssey-linux-monitoring % ssh agent-admin@localhost -p 20022
 The authenticity of host '[localhost]:20022 ([::1]:20022)' can't be established.
@@ -109,9 +115,9 @@ Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
 applicable law.
 
 agent-admin@09a31377137e:~$ 
-
-6. 그룹 생성
-
+```
+# 6. 그룹 생성
+```bash
 groupadd agent-common
 groupadd agent-core
 
@@ -121,9 +127,9 @@ usermod -aG agent-common agent-test
 
 usermod -aG agent-core agent-admin
 usermod -aG agent-core agent-dev
-
-7. 우분투 루트 계정에서 디렉토리 생성
-
+```
+# 7. 우분투 루트 계정에서 디렉토리 생성
+```bash
 mkdir -p /home/agent-admin/agent-app/upload_files
 mkdir -p /home/agent-admin/agent-app/api_keys
 mkdir -p /home/agent-admin/agent-app/bin
@@ -151,27 +157,27 @@ backups  cache  lib  local  lock  log  mail  opt  run  spool  tmp
 root@09a31377137e:/var# cd log/agent-app/
 root@09a31377137e:/var/log/agent-app# ls
 root@09a31377137e:/var/log/agent-app# 
-
-8. upload_files 권한 설정
-
+```
+# 8. upload_files 권한 설정
+```bash
 root@09a31377137e:/# chown -R agent-admin:agent-common /home/agent-admin/agent-app/upload_files
 chmod 770 /home/agent-admin/agent-app/upload_files
 root@09a31377137e:/# 
-
-9. api_keys 권한 설정
-
+```
+# 9. api_keys 권한 설정
+```bash
 root@09a31377137e:/# chown -R agent-admin:agent-core /home/agent-admin/agent-app/api_keys
 chmod 770 /home/agent-admin/agent-app/api_keys
 root@09a31377137e:/# 
-
-10. 로그 디렉토리 권한 설정
-
+```
+# 10. 로그 디렉토리 권한 설정
+```bash
 root@09a31377137e:/# chown -R agent-admin:agent-core /var/log/agent-app
 chmod 770 /var/log/agent-app
 root@09a31377137e:/# 
-
-11. 구조 확인
-
+```
+# 11. 구조 확인
+```bash
 root@09a31377137e:/# ls -l /home/agent-admin/agent-app
 total 0
 drwxrwx--- 1 agent-admin agent-core   0 May 12 06:53 api_keys
@@ -180,9 +186,9 @@ drwxrwx--- 1 agent-admin agent-common 0 May 12 06:53 upload_files
 root@09a31377137e:/# ls -ld /var/log/agent-app
 drwxrwx--- 1 agent-admin agent-core 0 May 12 06:53 /var/log/agent-app
 root@09a31377137e:/# 
-
-12. ACL확인
-
+```
+# 12. ACL확인
+```bash
 root@09a31377137e:/# getfacl /home/agent-admin/agent-app/upload_files
 getfacl /home/agent-admin/agent-app/api_keys
 getfacl: Removing leading '/' from absolute path names
@@ -202,9 +208,9 @@ group::rwx
 other::---
 
 root@09a31377137e:/# 
-
-13. 개념확인
-
+```
+# 13. 개념확인
+```bash
 upload_files
 → 협업 공간
 
@@ -215,9 +221,9 @@ log
 → 운영 정보 저장소
 
 이므로 각 폴더의 권한을 전부 다르게 줌.
-
-14. 키 파일 생성
-
+```
+# 14. 키 파일 생성
+```bash
 root@09a31377137e:/# echo "agent_api_key_test" > /home/agent-admin/agent-app/api_keys/t_secret.key
 
 chown agent-admin:agent-core /home/agent-admin/agent-app/api_keys/t_secret.key
@@ -227,9 +233,9 @@ cat /home/agent-admin/agent-app/api_keys/t_secret.key
 -rw-rw---- 1 agent-admin agent-core 19 May 12 07:10 /home/agent-admin/agent-app/api_keys/t_secret.key
 agent_api_key_test
 root@09a31377137e:/# 
-
-15. monitor.sh 작성
-
+```
+# 15. monitor.sh 작성
+```bash
 root@09a31377137e:/# nano /workspace/scripts/monitor.sh
 
 #!/bin/bash
@@ -340,9 +346,9 @@ if [ -f "$LOG_FILE" ]; then
 fi
 
 root@09a31377137e:/# 
-
-16. 컨테이너 과제 경로로 복사
-
+```
+# 16. 컨테이너 과제 경로로 복사
+```bash
 root@09a31377137e:/# cp /workspace/scripts/monitor.sh /home/agent-admin/agent-app/bin/monitor.sh
 
 chown agent-dev:agent-core /home/agent-admin/agent-app/bin/monitor.sh
