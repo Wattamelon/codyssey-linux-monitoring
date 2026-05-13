@@ -12,7 +12,7 @@ echo "[HEALTH CHECK]"
 # =========================
 # Process Check
 # =========================
-PID=$(pgrep -f "$APP_NAME")
+PID=$(pgrep -f "$APP_NAME" | head -n 1)
 
 if [ -z "$PID" ]; then
     echo "Checking process '$APP_NAME'... [FAIL]"
