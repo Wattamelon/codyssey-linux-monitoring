@@ -2291,3 +2291,510 @@ SSH 서버 프로세스 시작
 ```
 
 하게 만들어 주었다.
+
+
+# 디렉토리 생성
+
+현재 프로젝트에서는 Linux 서버 운영 구조를 만들기 위해 여러 디렉토리를 생성하였다.
+
+생성한 디렉토리:
+
+```bash
+mkdir -p /home/agent-admin/agent-app/upload_files
+mkdir -p /home/agent-admin/agent-app/api_keys
+mkdir -p /home/agent-admin/agent-app/bin
+mkdir -p /var/log/agent-app
+```
+
+---
+
+# mkdir
+
+```bash
+mkdir
+```
+
+는 디렉토리 생성 명령어이다.
+
+---
+
+# -p 옵션 의미
+
+```bash
+mkdir -p
+```
+
+의 의미:
+
+```text
+중간 경로까지 자동 생성
+```
+
+예:
+
+```bash
+mkdir -p /a/b/c
+```
+
+실행 시:
+- a 없으면 생성
+- b 없으면 생성
+- c 생성
+
+까지 한 번에 수행.
+
+---
+
+# 현재 프로젝트 디렉토리 구조
+
+```text
+/home/agent-admin/agent-app
+ ├── upload_files
+ ├── api_keys
+ └── bin
+
+/var/log/agent-app
+```
+
+구조 생성.
+
+---
+
+# /home 디렉토리 의미
+
+Linux에서:
+
+```text
+/home
+```
+
+은 일반 사용자 홈 디렉토리 저장 위치이다.
+
+현재 생성된 사용자:
+
+```text
+/home/agent-admin
+/home/agent-dev
+/home/agent-test
+```
+
+가 존재한다.
+
+즉:
+- 각 사용자 개인 작업 공간 역할.
+
+---
+
+# agent-app 디렉토리
+
+```text
+/home/agent-admin/agent-app
+```
+
+는 현재 프로젝트 애플리케이션 루트 디렉토리 역할이다.
+
+즉:
+- 프로그램
+- 업로드 파일
+- API Key
+- 실행 스크립트
+
+등을 저장하는 공간이다.
+
+---
+
+# upload_files 디렉토리
+
+```text
+/home/agent-admin/agent-app/upload_files
+```
+
+## 역할
+
+공유 업로드 공간.
+
+예:
+- 업로드 파일
+- 협업 데이터
+- 공용 리소스
+
+등 저장 가능.
+
+---
+
+# api_keys 디렉토리
+
+```text
+/home/agent-admin/agent-app/api_keys
+```
+
+## 역할
+
+민감 정보 저장 공간.
+
+예:
+- API Key
+- Secret Key
+- Token
+
+등 저장.
+
+---
+
+# bin 디렉토리
+
+```text
+/home/agent-admin/agent-app/bin
+```
+
+## 역할
+
+실행 가능한 스크립트 저장 공간.
+
+현재 프로젝트에서는:
+
+```text
+monitor.sh
+```
+
+저장 위치로 사용.
+
+---
+
+# /var/log 디렉토리 의미
+
+Linux에서:
+
+```text
+/var/log
+```
+
+는 시스템 로그 저장 위치이다.
+
+즉:
+- 운영 로그
+- 서비스 로그
+- 시스템 로그
+
+등을 저장하는 표준 디렉토리.
+
+---
+
+# /var/log/agent-app
+
+```text
+/var/log/agent-app
+```
+
+는 현재 프로젝트의 운영 로그 저장 공간이다.
+
+즉:
+
+```text
+monitor.log
+```
+
+파일이 저장되는 위치.
+
+---
+
+# ls 명령어
+
+```bash
+ls
+```
+
+는 현재 디렉토리 내부 목록 출력 명령어.
+
+---
+
+# cd 명령어
+
+```bash
+cd
+```
+
+는 디렉토리 이동 명령어.
+
+예:
+
+```bash
+cd /home
+```
+
+---
+
+# upload_files 권한 설정
+
+```bash
+chown -R agent-admin:agent-common /home/agent-admin/agent-app/upload_files
+
+chmod 770 /home/agent-admin/agent-app/upload_files
+```
+
+---
+
+# chown 의미
+
+```bash
+chown
+```
+
+는 파일/디렉토리 소유자 변경 명령어.
+
+---
+
+# -R 옵션 의미
+
+```bash
+-R
+```
+
+의 의미:
+
+```text
+하위 파일/디렉토리까지 재귀적으로 적용
+```
+
+---
+
+# 현재 설정 의미
+
+```bash
+chown -R agent-admin:agent-common
+```
+
+의 의미:
+
+```text
+owner = agent-admin
+group = agent-common
+```
+
+---
+
+# chmod 의미
+
+```bash
+chmod
+```
+
+는 권한 변경 명령어.
+
+---
+
+# 770 의미
+
+```text
+770 = rwx rwx ---
+```
+
+즉:
+
+| 대상 | 권한 |
+|---|---|
+| owner | rwx |
+| group | rwx |
+| others | --- |
+
+---
+
+# upload_files 권한 구조 의미
+
+현재:
+
+```text
+owner = agent-admin
+group = agent-common
+permission = 770
+```
+
+상태.
+
+즉:
+- agent-admin 접근 가능
+- agent-common 그룹 접근 가능
+- 나머지 사용자는 접근 불가
+
+상태이다.
+
+---
+
+# 왜 agent-common 그룹 사용?
+
+upload_files는:
+
+```text
+공유 협업 공간
+```
+
+개념이기 때문이다.
+
+현재:
+- agent-admin
+- agent-dev
+- agent-test
+
+모두 접근 가능하도록 설계.
+
+---
+
+# api_keys 권한 설정
+
+```bash
+chown -R agent-admin:agent-core /home/agent-admin/agent-app/api_keys
+
+chmod 770 /home/agent-admin/agent-app/api_keys
+```
+
+---
+
+# api_keys 권한 구조 의미
+
+현재:
+
+```text
+owner = agent-admin
+group = agent-core
+permission = 770
+```
+
+상태.
+
+즉:
+- agent-core 그룹만 접근 가능
+- 일반 사용자는 접근 불가
+
+상태.
+
+---
+
+# 왜 더 강하게 제한했는가
+
+api_keys는:
+
+```text
+민감 정보 저장 공간
+```
+
+이기 때문이다.
+
+예:
+- API Key
+- Secret Token
+- 인증 정보
+
+등 저장 가능.
+
+따라서:
+- 최소 권한 원칙 적용
+- 접근 사용자 제한
+
+구조로 설계.
+
+---
+
+# monitor.log 디렉토리 권한 설정
+
+```bash
+chown -R agent-admin:agent-core /var/log/agent-app
+
+chmod 770 /var/log/agent-app
+```
+
+---
+
+# 의미
+
+운영 로그 디렉토리를:
+
+```text
+agent-core 그룹 전용
+```
+
+으로 제한한 것이다.
+
+즉:
+- 운영 로그는 민감 정보 가능성 존재
+- 관리자 그룹만 접근 가능하도록 제한
+
+구조.
+
+---
+
+# 왜 로그도 보호하는가
+
+로그에는:
+- 시스템 상태
+- 프로세스 정보
+- 서비스 정보
+
+등이 기록된다.
+
+즉:
+- 내부 구조 노출 가능
+- 운영 정보 노출 가능
+
+상태.
+
+따라서:
+- 접근 제한 필요.
+
+---
+
+# 현재 프로젝트 전체 권한 구조
+
+```text
+upload_files
+ → 협업 공간
+ → agent-common 접근 가능
+
+api_keys
+ → 민감 정보
+ → agent-core 접근 가능
+
+monitor.log
+ → 운영 로그
+ → agent-core 접근 가능
+```
+
+---
+
+# 현재 프로젝트 핵심 보안 개념
+
+현재 프로젝트는:
+
+```text
+데이터 성격에 따라
+권한을 분리
+```
+
+한 구조이다.
+
+즉:
+
+| 종류 | 특징 | 접근 범위 |
+|---|---|---|
+| 공유 데이터 | 협업 목적 | 넓음 |
+| 민감 정보 | 보안 중요 | 제한 |
+| 운영 로그 | 내부 정보 | 제한 |
+
+구조로 나누어 관리하였다.
+
+---
+
+# 현재 프로젝트 전체 흐름
+
+```text
+사용자 생성
+        ↓
+그룹 생성
+        ↓
+디렉토리 생성
+        ↓
+데이터 역할 분리
+        ↓
+권한 설정
+        ↓
+보안 구조 구성
+```
