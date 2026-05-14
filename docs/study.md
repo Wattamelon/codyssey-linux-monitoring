@@ -6072,3 +6072,587 @@ ss -tulnp 로 확인
 - 다른 터미널에서 상태 점검
 
 구조를 경험한 것이다.
+
+# monitor.sh 배치
+
+현재 프로젝트에서는 작성한 monitor.sh를 실제 운영 위치로 복사하였다.
+
+```bash
+cp /workspace/scripts/monitor.sh /home/agent-admin/agent-app/bin/monitor.sh
+```
+
+---
+
+# cp 명령어
+
+```bash
+cp
+```
+
+는 파일 복사 명령어이다.
+
+---
+
+# 현재 의미
+
+현재 작성한:
+
+```text
+/workspace/scripts/monitor.sh
+```
+
+파일을:
+
+```text
+/home/agent-admin/agent-app/bin/
+```
+
+으로 복사.
+
+즉:
+
+```text
+실제 운영 위치에 배치
+```
+
+한 것이다.
+
+---
+
+# 왜 /workspace에서 작성했는가
+
+현재 프로젝트에서:
+
+```text
+/workspace
+```
+
+는 Host와 Docker Container가 연결된 볼륨 영역이다.
+
+즉:
+- GitHub 관리 가능
+- Host에서도 수정 가능
+- 컨테이너 재생성 후에도 유지 가능
+
+장점 존재.
+
+---
+
+# 왜 bin 디렉토리로 복사했는가
+
+```text
+/home/agent-admin/agent-app/bin
+```
+
+은:
+- 실행 가능한 스크립트 저장 공간.
+
+즉:
+- 실제 운영용 shell script 위치.
+
+---
+
+# monitor.sh owner/group 설정
+
+```bash
+chown agent-dev:agent-core /home/agent-admin/agent-app/bin/monitor.sh
+```
+
+---
+
+# 의미
+
+```text
+owner = agent-dev
+group = agent-core
+```
+
+설정.
+
+---
+
+# 왜 agent-dev를 owner로 설정했는가
+
+현재 프로젝트 구조에서는:
+
+```text
+agent-dev
+```
+
+를 개발 담당 사용자 역할로 사용하였다.
+
+즉:
+- monitor.sh 수정/관리 책임자 역할.
+
+---
+
+# 왜 agent-core 그룹인가
+
+현재 프로젝트에서:
+
+```text
+agent-core
+```
+
+는 핵심 운영 그룹.
+
+즉:
+- 운영 관련 스크립트 접근 가능 그룹.
+
+---
+
+# chmod 750
+
+```bash
+chmod 750 /home/agent-admin/agent-app/bin/monitor.sh
+```
+
+---
+
+# 의미
+
+```text
+750 = rwx r-x ---
+```
+
+---
+
+# 권한 구조
+
+| 대상 | 권한 |
+|---|---|
+| owner | rwx |
+| group | r-x |
+| others | --- |
+
+---
+
+# 현재 의미
+
+## owner(agent-dev)
+
+- 읽기 가능
+- 수정 가능
+- 실행 가능
+
+---
+
+## group(agent-core)
+
+- 읽기 가능
+- 실행 가능
+- 수정 불가
+
+---
+
+## others
+
+접근 불가.
+
+---
+
+# 왜 실행 권한(x)이 필요한가
+
+monitor.sh는:
+
+```text
+실행 가능한 shell script
+```
+
+이기 때문이다.
+
+즉:
+- x 권한 없으면 실행 불가능.
+
+---
+
+# ls -l 결과 해석
+
+```text
+-rwxr-x--- 1 agent-dev agent-core ...
+```
+
+---
+
+# 첫 번째 문자
+
+```text
+-
+```
+
+의미:
+
+```text
+일반 파일
+```
+
+.
+
+---
+
+# rwxr-x---
+
+권한 구조.
+
+```text
+owner = rwx
+group = r-x
+others = ---
+```
+
+---
+
+# agent-dev
+
+파일 owner.
+
+---
+
+# agent-core
+
+파일 group.
+
+---
+
+# bash -n 문법 검사
+
+```bash
+bash -n /home/agent-admin/agent-app/bin/monitor.sh
+```
+
+---
+
+# 의미
+
+```text
+shell script 문법 검사
+```
+
+.
+
+---
+
+# 중요한 특징
+
+```bash
+bash -n
+```
+
+은:
+- 실제 실행 안 함
+- syntax만 검사.
+
+즉:
+- 괄호 오류
+- if 오류
+- fi 누락
+- 문법 오류
+
+등 확인 가능.
+
+---
+
+# 왜 출력이 없었는가
+
+```text
+오류가 없으면 아무것도 출력 안 함
+```
+
+이 정상.
+
+즉:
+- 문법 정상 상태.
+
+---
+
+# monitor.sh 실제 실행
+
+```bash
+/home/agent-admin/agent-app/bin/monitor.sh
+```
+
+---
+
+# 실행 결과 의미
+
+현재 monitor.sh가:
+- 프로세스 상태
+- 포트 상태
+- 방화벽 상태
+- CPU/MEM/DISK 상태
+
+등을 점검.
+
+---
+
+# PID 여러 개 출력 문제
+
+출력:
+
+```text
+PID: 4949
+4950
+5220
+```
+
+---
+
+# 원인
+
+```bash
+pgrep -f "$APP_NAME"
+```
+
+가:
+- 관련 프로세스를 여러 개 검색.
+
+즉:
+- 여러 PID 반환.
+
+---
+
+# 이후 수정
+
+현재 프로젝트에서는:
+
+```bash
+head -n 1
+```
+
+추가하여:
+- 첫 번째 PID만 출력하도록 수정.
+
+---
+
+# UFW 오류 발생 이유
+
+출력:
+
+```text
+ERROR: problem running iptables
+```
+
+---
+
+# 원인
+
+Docker Container 내부에서는 기본적으로:
+- kernel firewall 제어 권한 제한.
+
+즉:
+- iptables 접근 제한 가능.
+
+---
+
+# 왜 발생했는가
+
+UFW는 내부적으로:
+
+```text
+iptables
+```
+
+를 사용한다.
+
+하지만 일반 Docker Container는:
+- host kernel firewall 직접 제어 불가.
+
+---
+
+# 그래서 privileged container 사용
+
+현재 프로젝트 후반에서는:
+
+```bash
+--privileged
+```
+
+옵션으로 컨테이너 재생성.
+
+즉:
+- firewall 제어 허용.
+
+---
+
+# UFW Status... [WARNING]
+
+현재 스크립트는:
+- 방화벽 실패 시
+- 종료하지 않고 WARNING만 출력.
+
+---
+
+# 이유
+
+과제 요구사항에서:
+
+```text
+Firewall 비활성은 WARNING만 출력
+```
+
+하도록 요구했기 때문.
+
+즉:
+- Health Check 실패 대상 아님.
+
+---
+
+# CPU Usage : 100%
+
+현재 순간 CPU 사용률.
+
+---
+
+# 왜 100%가 나왔는가
+
+monitor.sh 실행 중:
+- top
+- awk
+- shell processing
+
+등 순간 CPU 사용 증가 가능.
+
+또는:
+- container idle 상태라
+- 계산 순간 상대적으로 크게 측정 가능.
+
+---
+
+# Threshold Warning
+
+현재 설정:
+
+```text
+CPU > 20%
+```
+
+초과.
+
+따라서:
+
+```text
+[WARNING] CPU threshold exceeded
+```
+
+출력.
+
+---
+
+# monitor.log 기록 확인
+
+```bash
+tail -n 5 /var/log/agent-app/monitor.log
+```
+
+---
+
+# tail 의미
+
+파일 마지막 부분 출력.
+
+---
+
+# -n 5 의미
+
+마지막 5줄 출력.
+
+---
+
+# 현재 의미
+
+monitor.sh가 실제로:
+
+```text
+monitor.log에 기록 수행
+```
+
+했는지 확인.
+
+---
+
+# 로그 기록 성공
+
+출력:
+
+```text
+[2026-05-13 ...]
+```
+
+형태 확인.
+
+즉:
+- append 정상 동작.
+
+---
+
+# UFW 포트 허용
+
+```bash
+ufw allow 20022/tcp
+ufw allow 15034/tcp
+```
+
+---
+
+# 의미
+
+## 20022
+
+SSH 포트 허용.
+
+---
+
+## 15034
+
+agent-app 서비스 포트 허용.
+
+---
+
+# ufw enable
+
+```bash
+ufw enable
+```
+
+의 의미:
+
+```text
+방화벽 활성화
+```
+
+.
+
+---
+
+# ufw status
+
+현재 방화벽 상태 출력.
+
+즉:
+- 활성 여부
+- 허용 포트
+
+확인 가능.
+
+---
+
+# 현재 프로젝트의 핵심 의미
+
+현재 단계는:
+
+```text
+운영 자동화 스크립트를
+실제 Linux 서버 구조에 배치하고,
+보안 정책 및 모니터링 체계를 연결
+```
+
+하는 과정이다.
+
+즉:
+- Linux 권한 관리
+- Bash 자동화
+- 서버 모니터링
+- 로그 관리
+- 방화벽 정책
+
+등을 하나의 운영 구조로 연결한 단계.
