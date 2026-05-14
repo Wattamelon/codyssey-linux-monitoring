@@ -5202,3 +5202,205 @@ monitor.log 크기 확인
 ```
 
 라고 볼 수 있다.
+
+
+# 로그 로테이션 코드가 필요한 이유
+
+네 말이 맞다.
+
+현재 코드가 정상적으로 계속 실행된다면:
+
+```text
+rotate된 로그 파일은 항상 최대 10개 이하로 유지된다
+```
+
+라고 보는 게 맞다.
+
+그래서 이 코드는:
+
+```text
+로그가 10개를 넘은 뒤에 뒤늦게 처리하는 예외 코드
+```
+
+라기보다는,
+
+```text
+로그가 10개를 넘지 않도록 계속 유지하는 관리 코드
+```
+
+라고 이해하는 게 정확하다.
+
+---
+
+# 코드 흐름
+
+```bash
+if [ "$FILE_SIZE_MB" -ge 10 ]; then
+    TIMESTAMP=$(date '+%Y%m%d_%H%M%S')
+    mv "$LOG_FILE" "/var/log/agent-app/monitor_${TIMESTAMP}.log"
+    touch "$LOG_FILE"
+
+    ls -tp /var/log/agent-app/monitor_*.log 2>/dev/null | tail -n +11 | xargs -r rm --
+
+    echo "[INFO] Log rotated"
+fi
+```
+
+이 코드는 `monitor.log`가 10MB 이상이 되었을 때만 실행된다.
+
+---
+
+# rotate가 발생하는 순간
+
+예를 들어 현재 상태가 이렇다고 하자.
+
+```text
+monitor.log
+monitor_1.log
+monitor_2.log
+...
+monitor_10.log
+```
+
+여기서 `monitor.log`가 10MB 이상이 되면:
+
+```bash
+mv "$LOG_FILE" "/var/log/agent-app/monitor_${TIMESTAMP}.log"
+```
+
+에 의해 기존 `monitor.log`가 새로운 백업 로그로 이름이 바뀐다.
+
+그러면 순간적으로 rotate된 로그 파일이 11개가 될 수 있다.
+
+```text
+monitor_새로운.log
+monitor_1.log
+monitor_2.log
+...
+monitor_10.log
+```
+
+즉 이 순간에는:
+
+```text
+rotate된 로그 파일이 10개를 초과
+```
+
+할 수 있다.
+
+---
+
+# 그래서 삭제 코드가 필요하다
+
+이 코드:
+
+```bash
+ls -tp /var/log/agent-app/monitor_*.log 2>/dev/null | tail -n +11 | xargs -r rm --
+```
+
+는 방금 새로 생긴 로그까지 포함해서:
+
+```text
+최신 10개만 남기고
+나머지 오래된 로그 삭제
+```
+
+를 수행한다.
+
+즉 목적은:
+
+```text
+항상 10개 이하로 유지하기 위한 정리 작업
+```
+
+이다.
+
+---
+
+# 네가 말한 "항상 10개 이하로 유지되는 거 아니냐"에 대한 답
+
+맞다.
+
+그렇게 유지되도록 만드는 코드가 바로 이 부분이다.
+
+```bash
+ls -tp /var/log/agent-app/monitor_*.log 2>/dev/null | tail -n +11 | xargs -r rm --
+```
+
+즉 이 코드는:
+
+```text
+이미 10개 이하니까 필요 없는 코드
+```
+
+가 아니라,
+
+```text
+10개 이하 상태를 계속 유지하기 위해 필요한 코드
+```
+
+이다.
+
+---
+
+# 더 쉽게 비유하면
+
+책장에 책을 최대 10권만 보관한다고 하자.
+
+새 책이 들어올 때마다:
+
+```text
+책장에 새 책 추가
+        ↓
+책이 11권이 되었는지 확인
+        ↓
+11권이면 가장 오래된 책 버림
+        ↓
+다시 10권 유지
+```
+
+이 흐름이다.
+
+현재 로그 로테이션도 똑같다.
+
+```text
+새 rotate 로그 생성
+        ↓
+rotate 로그가 11개 이상인지 확인
+        ↓
+오래된 로그 삭제
+        ↓
+최신 10개 유지
+```
+
+---
+
+# 핵심 정리
+
+이 코드는 에러 처리라기보다는:
+
+```text
+로그 보관 정책을 유지하기 위한 정상 관리 로직
+```
+
+이다.
+
+현재 정책은:
+
+```text
+monitor.log가 10MB 이상이면 rotate
+rotate된 로그는 최신 10개만 유지
+그보다 오래된 로그는 삭제
+```
+
+이다.
+
+즉:
+
+```text
+로그 파일 용량 관리
++
+로그 파일 개수 관리
+```
+
+를 동시에 수행하는 코드이다.
