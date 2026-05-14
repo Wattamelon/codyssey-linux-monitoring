@@ -601,3 +601,776 @@ cron 자동화
         ↓
 monitor.log 누적
 ```
+
+
+# SSH를 사용하는 이유
+
+SSH(Secure Shell)는 원격 서버에 안전하게 접속하기 위한 프로토콜이다.
+
+현재 프로젝트에서는:
+
+```text
+Mac Terminal
+    ↓
+SSH
+    ↓
+Docker Container Ubuntu
+```
+
+구조로 사용하였다.
+
+즉:
+
+```text
+컨테이너 내부 Ubuntu 서버를
+원격 리눅스 서버처럼 관리
+```
+
+하기 위해 SSH를 사용한 것이다.
+
+---
+
+# SSH를 사용하는 목적
+
+## 원격 서버 관리
+
+물리적으로 서버 앞에 가지 않아도 터미널로 접속 가능하다.
+
+예:
+
+```bash
+ssh agent-admin@localhost -p 20022
+```
+
+현재 프로젝트에서는 localhost였지만,
+실제 서버 환경에서는:
+
+```text
+AWS
+Ubuntu Server
+사내 Linux 서버
+라즈베리파이
+```
+
+등에도 동일하게 사용된다.
+
+---
+
+# 보안 통신
+
+SSH는 데이터를 암호화해서 전송한다.
+
+즉:
+
+```text
+패스워드
+명령어
+파일
+```
+
+등이 네트워크에서 암호화된다.
+
+---
+
+# 터미널 기반 서버 운영
+
+리눅스 서버는 GUI 없이 운영되는 경우가 많다.
+
+즉:
+
+```text
+CLI(Command Line Interface)
+```
+
+환경에서 관리하는 경우가 대부분이다.
+
+SSH는 이러한 CLI 서버 관리의 표준 도구이다.
+
+---
+
+# 현재 프로젝트에서 SSH 역할
+
+현재 프로젝트에서는:
+
+- Docker 컨테이너를 서버처럼 사용
+- sshd 실행
+- 포트 20022 LISTEN
+- 외부 터미널에서 접속
+
+구조로 사용하였다.
+
+즉:
+
+```text
+컨테이너 내부 Ubuntu를
+실제 Linux 서버처럼 운영
+```
+
+하는 환경을 만든 것이다.
+
+---
+
+# SSH 없이 작업하면 생기는 문제
+
+## 컨테이너 내부 직접 접속만 가능
+
+SSH를 사용하지 않으면:
+
+```bash
+docker exec -it container bash
+```
+
+처럼 Host에서 직접 컨테이너를 조작해야 한다.
+
+즉:
+
+```text
+외부 네트워크 접속 불가능
+```
+
+상태가 된다.
+
+---
+
+# 실제 서버 운영 구조를 경험하기 어려움
+
+SSH 없이 작업하면:
+
+```text
+원격 서버 운영 경험
+```
+
+을 얻기 어렵다.
+
+현재 프로젝트 핵심은:
+
+```text
+"서버처럼 운영"
+```
+
+하는 경험이다.
+
+---
+
+# 사용자 기반 접근 제어가 제한적
+
+SSH 환경에서는:
+
+- 사용자 계정 분리
+- 권한 분리
+- 로그인 제한
+- root 접속 차단
+
+등을 적용 가능하다.
+
+즉:
+
+```text
+보안 정책 적용 가능
+```
+
+해진다.
+
+---
+
+# 자동화 및 운영 구조 학습 제한
+
+실제 운영 환경에서는:
+
+- SSH
+- cron
+- systemd
+- monitoring
+
+등이 함께 사용된다.
+
+SSH를 사용하지 않으면:
+- 실제 운영 흐름 이해가 어려워진다.
+
+---
+
+# SSH와 docker exec 차이
+
+## docker exec
+
+```bash
+docker exec -it container bash
+```
+
+의미:
+
+```text
+Host가 직접 컨테이너 내부 bash 실행
+```
+
+즉:
+- Docker 권한 필요
+- Host 접근 권한 필요
+- 로컬 관리 중심
+
+---
+
+## SSH
+
+```bash
+ssh user@host -p 20022
+```
+
+의미:
+
+```text
+네트워크 기반 원격 접속
+```
+
+즉:
+- 외부 터미널 가능
+- 사용자 인증 가능
+- 서버 운영 구조와 유사
+
+---
+
+# SSH의 핵심 구성 요소
+
+## ssh
+
+클라이언트 프로그램.
+
+접속 요청을 보낸다.
+
+```bash
+ssh user@host
+```
+
+---
+
+## sshd
+
+SSH 서버 데몬.
+
+클라이언트 접속을 기다린다.
+
+```bash
+/usr/sbin/sshd
+```
+
+---
+
+# SSH 포트
+
+기본 SSH 포트:
+
+```text
+22
+```
+
+현재 프로젝트에서는:
+
+```text
+20022
+```
+
+사용.
+
+## 포트를 변경하는 이유
+
+기본 포트 22는 공격 대상이 되기 쉽다.
+
+따라서:
+
+```text
+비표준 포트 사용
+```
+
+을 통해:
+- 단순 자동 스캔 감소
+- 기본 공격 감소
+
+효과를 얻는다.
+
+---
+
+# Root SSH 접속 차단 이유
+
+현재 프로젝트 설정:
+
+```text
+PermitRootLogin no
+```
+
+## 이유
+
+root 계정은 모든 권한을 가진다.
+
+즉:
+- 계정 탈취 시 서버 전체 위험
+- 실수 발생 시 피해 큼
+
+따라서 일반 사용자로 로그인 후:
+
+```bash
+sudo
+```
+
+를 사용하는 구조가 일반적이다.
+
+---
+
+# SSH 외의 다른 방안
+
+# docker exec
+
+현재 프로젝트에서도 사용한 방식.
+
+```bash
+docker exec -it container bash
+```
+
+## 장점
+
+- 간단함
+- 설정 필요 적음
+
+## 단점
+
+- 원격 접속 구조 아님
+- 사용자 인증 구조 약함
+- 실제 서버 운영과 다름
+
+---
+
+# Telnet
+
+과거 원격 접속 방식.
+
+```text
+암호화 없음
+```
+
+이 가장 큰 문제.
+
+현재는 거의 사용하지 않는다.
+
+---
+
+# Web Console
+
+예:
+
+- Portainer
+- Cockpit
+- AWS Console
+
+브라우저 기반 서버 관리.
+
+## 장점
+
+- GUI 제공
+- 사용 쉬움
+
+## 단점
+
+- 리눅스 내부 구조 학습 제한
+- CLI 운영 능력 부족 가능
+
+---
+
+# Remote Desktop
+
+예:
+
+- VNC
+- RDP
+
+GUI 원격 접속 방식.
+
+주로 Windows 환경에서 사용된다.
+
+Linux 서버 운영에서는:
+- SSH가 훨씬 일반적이다.
+
+---
+
+# SSH가 실무에서 중요한 이유
+
+실제 Linux 서버 운영에서는 거의 기본이다.
+
+예:
+
+- AWS EC2
+- Ubuntu Server
+- Kubernetes Node
+- 회사 내부 서버
+- 라즈베리파이
+- NAS
+
+등 대부분 SSH 기반으로 관리한다.
+
+---
+
+# 현재 프로젝트 전체 SSH 흐름
+
+```text
+Mac Terminal
+    ↓
+ssh agent-admin@localhost -p 20022
+    ↓
+Docker Port Forwarding
+    ↓
+Container Ubuntu
+    ↓
+sshd
+    ↓
+agent-admin shell
+```
+
+---
+
+# 현재 프로젝트에서 SSH를 통해 학습한 내용
+
+- Linux 원격 접속 구조
+- ssh와 sshd 차이
+- 포트 기반 서비스 운영
+- Root 로그인 차단
+- 사용자 기반 인증
+- Linux 서버 운영 흐름
+- 컨테이너를 서버처럼 사용하는 방법
+
+
+
+# upload_files
+
+upload_files는 디렉토리(폴더)이다.
+
+## 현재 위치
+
+```text
+/home/agent-admin/agent-app/upload_files
+```
+
+## 역할
+
+공유 업로드 공간.
+
+현재 프로젝트에서는:
+
+```text
+여러 사용자가 함께 접근 가능한 협업 공간
+```
+
+개념으로 사용하였다.
+
+예를 들어:
+- 업로드 파일 저장
+- 공유 데이터 저장
+- 공용 작업 파일 저장
+
+등의 역할을 수행할 수 있다.
+
+---
+
+## 현재 권한 구조
+
+```text
+owner : agent-admin
+group : agent-common
+permission : 770
+```
+
+즉:
+
+```text
+agent-common 그룹 사용자들은 접근 가능
+```
+
+상태이다.
+
+현재 포함 사용자:
+
+- agent-admin
+- agent-dev
+- agent-test
+
+---
+
+## 현재 구조
+
+```text
+upload_files
+ ├── 업로드 파일
+ ├── 공유 데이터
+ └── 협업 리소스
+```
+
+---
+
+# api_keys
+
+api_keys는 디렉토리(폴더)이다.
+
+## 현재 위치
+
+```text
+/home/agent-admin/agent-app/api_keys
+```
+
+## 역할
+
+민감 정보 저장소.
+
+현재 프로젝트에서는:
+
+```text
+API Key
+Secret Key
+Token
+```
+
+같은 민감 정보를 저장하는 공간 역할이다.
+
+예:
+
+```text
+t_secret.key
+```
+
+파일 저장.
+
+---
+
+## 현재 권한 구조
+
+```text
+owner : agent-admin
+group : agent-core
+permission : 770
+```
+
+즉:
+
+```text
+agent-core 그룹 사용자만 접근 가능
+```
+
+상태이다.
+
+현재 포함 사용자:
+
+- agent-admin
+- agent-dev
+
+---
+
+## 왜 권한을 더 강하게 제한했는가
+
+API Key는 민감 정보이다.
+
+즉:
+- 외부 유출 위험
+- 인증 우회 위험
+- 서비스 탈취 위험
+
+등이 존재한다.
+
+따라서:
+
+```text
+최소 권한 원칙
+```
+
+을 적용하였다.
+
+---
+
+## 현재 구조
+
+```text
+api_keys
+ ├── t_secret.key
+ ├── service.key
+ └── secret.token
+```
+
+같은 구조를 가질 수 있다.
+
+---
+
+# monitor.log
+
+monitor.log는 파일(File)이다.
+
+## 현재 위치
+
+```text
+/var/log/agent-app/monitor.log
+```
+
+## 역할
+
+시스템 상태 기록 파일.
+
+현재 프로젝트에서는 monitor.sh가:
+
+- CPU 사용률
+- 메모리 사용률
+- 디스크 사용률
+- PID 상태
+
+등을 기록한다.
+
+---
+
+## 로그 예시
+
+```text
+[2026-05-13 16:10:01]
+PID:5051
+CPU:17.5%
+MEM:5.4%
+DISK_USED:1%
+```
+
+---
+
+# /var/log 디렉토리 의미
+
+Linux에서:
+
+```text
+/var/log
+```
+
+는 시스템 로그 저장 위치이다.
+
+즉 현재 프로젝트도:
+
+```text
+Linux 표준 로그 구조
+```
+
+를 따라간 것이다.
+
+---
+
+# monitor.log 권한 구조
+
+현재 monitor.log는:
+
+```text
+owner : agent-admin
+group : agent-core
+permission : 660
+```
+
+상태로 구성하였다.
+
+즉:
+
+```text
+agent-core 그룹 사용자만 로그 접근 가능
+```
+
+상태이다.
+
+---
+
+# monitor.log 역할
+
+## 운영 상태 기록
+
+서버 상태 추적.
+
+---
+
+## 장애 분석
+
+문제 발생 시:
+- CPU 폭주
+- 메모리 증가
+- 서비스 장애
+
+등 분석 가능.
+
+---
+
+## 자동 모니터링 기록
+
+cron이 monitor.sh를 반복 실행하면서:
+
+```text
+monitor.log
+```
+
+에 자동 append 수행.
+
+---
+
+# 현재 프로젝트 전체 구조
+
+```text
+/home/agent-admin/agent-app
+ ├── upload_files/
+ ├── api_keys/
+ └── bin/
+
+ /var/log/agent-app
+ └── monitor.log
+```
+
+---
+
+# 현재 프로젝트에서 각 공간의 역할
+
+| 이름 | 종류 | 역할 |
+|---|---|---|
+| upload_files | 디렉토리 | 공유 업로드 공간 |
+| api_keys | 디렉토리 | 민감 정보 저장소 |
+| monitor.log | 파일 | 시스템 운영 로그 |
+
+---
+
+# 왜 전부 권한을 다르게 설정했는가
+
+각 데이터의 민감도가 다르기 때문이다.
+
+## upload_files
+
+공유 목적.
+
+비교적 접근 범위 넓음.
+
+---
+
+## api_keys
+
+민감 정보.
+
+접근 범위 제한 필요.
+
+---
+
+## monitor.log
+
+운영 정보.
+
+관리 그룹만 접근 가능하도록 제한.
+
+---
+
+# 현재 프로젝트의 보안 구조 핵심
+
+```text
+데이터 성격에 따라
+권한을 분리하여 관리
+```
+
+하는 구조이다.
+
+즉:
+
+```text
+협업 데이터
+민감 데이터
+운영 데이터
+```
+
+를 각각 분리한 것이다.
