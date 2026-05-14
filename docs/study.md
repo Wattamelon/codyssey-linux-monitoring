@@ -3794,3 +3794,417 @@ monitor.log
 - 운영 데이터
 
 를 서로 다른 권한 정책으로 관리한 것이다.
+
+
+# 키 파일 생성
+
+현재 프로젝트에서는 API Key와 같은 민감 정보를 저장하는 구조를 만들기 위해 키 파일을 생성하였다.
+
+생성 명령어:
+
+```bash
+echo "agent_api_key_test" > /home/agent-admin/agent-app/api_keys/t_secret.key
+```
+
+---
+
+# echo 명령어
+
+```bash
+echo
+```
+
+는 문자열 출력 명령어이다.
+
+예:
+
+```bash
+echo "hello"
+```
+
+출력:
+
+```text
+hello
+```
+
+---
+
+# > 리다이렉션 의미
+
+현재 명령어:
+
+```bash
+echo "agent_api_key_test" > file
+```
+
+의:
+
+```text
+>
+```
+
+는 출력 결과를 파일에 저장하라는 의미이다.
+
+즉:
+
+```text
+echo 출력 결과
+→ 파일에 기록
+```
+
+구조.
+
+---
+
+# 현재 실제 동작
+
+```bash
+echo "agent_api_key_test" > /home/agent-admin/agent-app/api_keys/t_secret.key
+```
+
+실행 시:
+
+```text
+t_secret.key 파일 생성
+```
+
+후:
+
+```text
+agent_api_key_test
+```
+
+문자열 저장.
+
+---
+
+# 현재 생성된 파일
+
+```text
+/home/agent-admin/agent-app/api_keys/t_secret.key
+```
+
+---
+
+# 왜 api_keys 디렉토리에 저장했는가
+
+현재 프로젝트에서:
+
+```text
+api_keys
+```
+
+는 민감 정보 저장 공간 역할이다.
+
+즉:
+- API Key
+- Secret Token
+- 인증 정보
+
+등 저장 목적.
+
+---
+
+# 왜 키 파일을 따로 관리하는가
+
+실제 서버 운영에서는:
+
+```text
+민감 정보를 코드 내부에 직접 작성하지 않음
+```
+
+구조가 일반적이다.
+
+예:
+- DB Password
+- API Key
+- AWS Secret Key
+
+등.
+
+---
+
+# 코드에 직접 넣을 경우 문제점
+
+예:
+
+```python
+API_KEY = "abcdefg"
+```
+
+처럼 코드에 직접 넣으면:
+
+- GitHub 업로드 시 노출 가능
+- 협업 중 유출 가능
+- 로그/스크린샷 노출 가능
+
+위험 존재.
+
+---
+
+# 실제 운영 방식
+
+실제 서버에서는:
+- 환경 변수
+- 별도 설정 파일
+- secret 파일
+
+등으로 분리 관리한다.
+
+현재 프로젝트의:
+
+```text
+t_secret.key
+```
+
+도 이런 구조를 단순화한 예시이다.
+
+---
+
+# chown 설정
+
+```bash
+chown agent-admin:agent-core /home/agent-admin/agent-app/api_keys/t_secret.key
+```
+
+의 의미:
+
+```text
+owner = agent-admin
+group = agent-core
+```
+
+설정.
+
+---
+
+# 왜 agent-core 그룹인가
+
+현재 프로젝트에서:
+
+```text
+agent-core
+```
+
+는 민감 정보 접근 가능한 그룹이다.
+
+즉:
+- 관리자
+- 핵심 운영 사용자
+
+만 접근 가능하도록 설계.
+
+---
+
+# chmod 660 의미
+
+```bash
+chmod 660 t_secret.key
+```
+
+의 의미:
+
+```text
+660 = rw- rw- ---
+```
+
+---
+
+# 권한 구조 해석
+
+| 대상 | 권한 |
+|---|---|
+| owner | read/write |
+| group | read/write |
+| others | 접근 불가 |
+
+---
+
+# 현재 권한 구조 의미
+
+현재:
+
+```text
+owner = agent-admin
+group = agent-core
+permission = 660
+```
+
+상태.
+
+즉:
+
+| 사용자 | 접근 가능 여부 |
+|---|---|
+| agent-admin | 가능 |
+| agent-core 그룹 사용자 | 가능 |
+| 그 외 사용자 | 불가능 |
+
+---
+
+# 왜 execute(x) 권한이 없는가
+
+현재 파일은:
+
+```text
+실행 파일이 아니라 데이터 파일
+```
+
+이다.
+
+즉:
+- 실행 목적 없음
+- 읽기/쓰기만 필요
+
+상태.
+
+따라서:
+
+```text
+rw- rw- ---
+```
+
+만 부여.
+
+---
+
+# ls -l 명령어
+
+```bash
+ls -l
+```
+
+은 상세 파일 정보 출력 명령어.
+
+---
+
+# 출력 결과 해석
+
+```text
+-rw-rw---- 1 agent-admin agent-core 19 May 12 07:10 t_secret.key
+```
+
+---
+
+# 첫 번째 문자
+
+```text
+-
+```
+
+의미:
+
+```text
+일반 파일
+```
+
+---
+
+# rw-rw----
+
+권한 의미.
+
+```text
+owner = rw-
+group = rw-
+others = ---
+```
+
+---
+
+# agent-admin
+
+파일 owner.
+
+---
+
+# agent-core
+
+파일 group.
+
+---
+
+# 19
+
+파일 크기(byte).
+
+---
+
+# cat 명령어
+
+```bash
+cat file
+```
+
+은 파일 내용을 출력하는 명령어.
+
+현재:
+
+```bash
+cat /home/agent-admin/agent-app/api_keys/t_secret.key
+```
+
+실행 결과:
+
+```text
+agent_api_key_test
+```
+
+출력.
+
+---
+
+# 현재 프로젝트에서 이 단계의 목적
+
+현재 단계는:
+
+```text
+민감 정보 저장 구조를
+권한 기반으로 안전하게 관리
+```
+
+하는 연습이다.
+
+즉:
+- 파일 생성
+- 권한 제한
+- 그룹 기반 접근 제어
+
+구조를 구현한 것이다.
+
+---
+
+# 현재 프로젝트 보안 구조 흐름
+
+```text
+api_keys 디렉토리 생성
+        ↓
+민감 파일 생성
+        ↓
+owner 설정
+        ↓
+group 제한
+        ↓
+others 접근 차단
+```
+
+---
+
+# 현재 프로젝트 핵심 개념
+
+현재 프로젝트는:
+
+```text
+민감 데이터는
+일반 사용자에게 공개하지 않음
+```
+
+원칙을 적용한 구조이다.
+
+즉:
+- 공유 데이터
+- 민감 데이터
+- 운영 데이터
+
+를 서로 다른 권한 정책으로 관리하였다.
