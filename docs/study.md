@@ -3421,3 +3421,376 @@ api_keys
 - group은 접근 허용 대상
 
 개념으로 설계한 구조이다.
+
+
+# ACL 확인
+
+현재 프로젝트에서는 디렉토리 권한 설정 이후:
+
+```bash
+getfacl /home/agent-admin/agent-app/upload_files
+getfacl /home/agent-admin/agent-app/api_keys
+```
+
+명령어를 사용하여 권한 상태를 확인하였다.
+
+---
+
+# getfacl 이란
+
+```bash
+getfacl
+```
+
+은 Linux의 ACL(Access Control List) 정보를 조회하는 명령어이다.
+
+즉:
+
+```text
+파일/디렉토리 접근 권한 구조 확인
+```
+
+명령어.
+
+---
+
+# ACL 이란
+
+ACL은:
+
+```text
+파일 접근 제어 목록
+```
+
+이다.
+
+기본 Linux 권한 시스템보다 더 세부적인 접근 제어를 가능하게 만든다.
+
+---
+
+# 기본 Linux 권한 구조
+
+일반 Linux 권한은:
+
+```text
+owner
+group
+others
+```
+
+3단계만 존재한다.
+
+예:
+
+```text
+770
+```
+
+---
+
+# ACL이 필요한 이유
+
+기본 권한만으로는:
+
+```text
+특정 사용자만 추가 허용
+```
+
+같은 세밀한 제어가 어렵다.
+
+ACL은:
+- 사용자별 권한
+- 그룹별 권한
+- 세부 접근 정책
+
+등을 추가 가능하게 만든다.
+
+---
+
+# 현재 프로젝트에서는 왜 getfacl을 사용했는가
+
+현재 프로젝트에서는:
+
+```text
+권한 설정이 제대로 적용되었는지 검증
+```
+
+하기 위해 사용하였다.
+
+즉:
+- owner 확인
+- group 확인
+- rwx 권한 확인
+
+용도.
+
+---
+
+# 출력 결과 해석
+
+```text
+# owner: agent-admin
+# group: agent-common
+```
+
+의 의미:
+
+| 항목 | 의미 |
+|---|---|
+| owner | 실제 소유자 |
+| group | 공동 접근 그룹 |
+
+---
+
+# user::rwx
+
+의미:
+
+```text
+owner 권한
+```
+
+현재:
+- 읽기
+- 쓰기
+- 실행
+
+전부 가능.
+
+즉:
+
+```text
+rwx = 7
+```
+
+---
+
+# group::rwx
+
+의미:
+
+```text
+group 권한
+```
+
+현재:
+- group 사용자들도
+- 읽기/쓰기/실행 가능.
+
+즉:
+
+```text
+rwx = 7
+```
+
+---
+
+# other::---
+
+의미
+
+```text
+기타 사용자 접근 불가
+```
+
+즉:
+- owner도 아니고
+- group도 아니면
+
+접근 불가능.
+
+---
+
+# 현재 upload_files 구조 해석
+
+```text
+owner : agent-admin
+group : agent-common
+permission : rwx rwx ---
+```
+
+즉:
+
+| 사용자 | 접근 가능 여부 |
+|---|---|
+| agent-admin | 가능 |
+| agent-common 그룹 사용자 | 가능 |
+| 그 외 사용자 | 불가능 |
+
+---
+
+# 현재 api_keys 구조 해석
+
+```text
+owner : agent-admin
+group : agent-core
+permission : rwx rwx ---
+```
+
+즉:
+
+| 사용자 | 접근 가능 여부 |
+|---|---|
+| agent-admin | 가능 |
+| agent-core 그룹 사용자 | 가능 |
+| 그 외 사용자 | 불가능 |
+
+---
+
+# upload_files와 api_keys의 차이
+
+## upload_files
+
+```text
+공유 협업 공간
+```
+
+현재:
+- agent-common 그룹 접근 가능.
+
+즉:
+- agent-admin
+- agent-dev
+- agent-test
+
+등 접근 가능.
+
+---
+
+# api_keys
+
+```text
+민감 정보 저장 공간
+```
+
+현재:
+- agent-core 그룹만 접근 가능.
+
+즉:
+- agent-admin
+- agent-dev
+
+만 접근 가능.
+
+---
+
+# getfacl 경고 메시지 의미
+
+출력:
+
+```text
+getfacl: Removing leading '/' from absolute path names
+```
+
+는 오류가 아니다.
+
+---
+
+# 의미
+
+ACL 출력 시:
+
+```text
+절대경로의 맨 앞 '/'
+```
+
+를 제거해서 표시하겠다는 의미.
+
+예:
+
+원래:
+
+```text
+/home/agent-admin/...
+```
+
+출력 시:
+
+```text
+home/agent-admin/...
+```
+
+처럼 표시.
+
+단순 출력 형식 처리일 뿐이다.
+
+---
+
+# 왜 ACL 확인이 중요한가
+
+Linux 서버 운영에서는:
+
+```text
+권한 설정 후 반드시 검증
+```
+
+하는 과정이 중요하다.
+
+왜냐면:
+- 잘못된 권한
+- 과도한 권한
+- 접근 불가 문제
+
+등이 자주 발생하기 때문이다.
+
+---
+
+# 현재 프로젝트에서 ACL 확인의 의미
+
+현재 프로젝트에서는:
+
+```text
+설계한 보안 구조가
+실제로 적용되었는지 검증
+```
+
+하는 과정이다.
+
+즉:
+- 공유 공간은 공유 가능
+- 민감 정보는 제한
+- others 접근 차단
+
+구조가 정상인지 확인한 것이다.
+
+---
+
+# 현재 프로젝트 전체 권한 구조
+
+```text
+upload_files
+ → 협업 공유 공간
+
+api_keys
+ → 민감 정보 저장 공간
+
+monitor.log
+ → 운영 로그 저장 공간
+```
+
+각 데이터 성격에 따라:
+- owner
+- group
+- permission
+
+을 다르게 설정하였다.
+
+---
+
+# 현재 프로젝트 핵심 보안 개념
+
+현재 프로젝트는:
+
+```text
+데이터 중요도에 따라
+접근 범위를 분리
+```
+
+한 구조이다.
+
+즉:
+- 공유 데이터
+- 민감 정보
+- 운영 데이터
+
+를 서로 다른 권한 정책으로 관리한 것이다.
