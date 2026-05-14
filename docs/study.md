@@ -2291,7 +2291,7 @@ SSH 서버 프로세스 시작
 ```
 
 하게 만들어 주었다.
-
+---
 
 # 디렉토리 생성
 
@@ -2798,3 +2798,337 @@ monitor.log
         ↓
 보안 구조 구성
 ```
+
+
+````md id="k9x4tw"
+# 디렉토리를 agent-admin 아래에 생성했다는 의미
+
+현재 생성한 디렉토리:
+
+```bash
+mkdir -p /home/agent-admin/agent-app/upload_files
+mkdir -p /home/agent-admin/agent-app/api_keys
+mkdir -p /home/agent-admin/agent-app/bin
+```
+
+는 모두:
+
+```text
+/home/agent-admin
+```
+
+아래에 생성되었다.
+
+즉:
+
+```text
+agent-admin 사용자의 홈 디렉토리 내부
+```
+
+에 생성된 것이다.
+
+---
+
+# 기본적으로 누가 접근 가능한가
+
+Linux에서는 파일/디렉토리를 생성하면:
+
+```text
+생성한 사용자(owner)
+```
+
+가 기본 소유자가 된다.
+
+현재는:
+
+```text
+root 계정
+```
+
+에서 생성했기 때문에,
+처음 생성 시 owner는 사실 root였다.
+
+즉 초기 상태는 대략:
+
+```text
+owner = root
+group = root
+```
+
+상태.
+
+---
+
+# 왜 이후에 chown을 수행했는가
+
+그래서 이후에:
+
+```bash
+chown -R agent-admin:agent-common upload_files
+```
+
+같은 작업을 수행한 것이다.
+
+즉:
+
+```text
+실제 owner를 agent-admin으로 변경
+```
+
+한 것.
+
+---
+
+# 현재 구조 해석
+
+예를 들어:
+
+```bash
+chown -R agent-admin:agent-common upload_files
+```
+
+의 의미는:
+
+```text
+owner = agent-admin
+group = agent-common
+```
+
+으로 변경하겠다는 뜻.
+
+---
+
+# owner와 group의 차이
+
+## owner
+
+파일/디렉토리의 실제 소유자.
+
+즉:
+- 가장 강한 권한 기준.
+- owner 권한 적용.
+
+현재:
+
+```text
+agent-admin
+```
+
+이 owner.
+
+---
+
+## group
+
+공동 접근 그룹.
+
+즉:
+- 특정 사용자 집합에게 추가 접근 허용.
+
+현재:
+
+```text
+agent-common
+```
+
+이 group.
+
+---
+
+# 질문 핵심 답변
+
+맞아.
+
+현재 권한 설정 과정의 핵심 목적은:
+
+```text
+agent-admin 외의 다른 사용자들에게
+접근 권한을 부여하기 위한 과정
+```
+
+이라고 이해하면 된다.
+
+---
+
+# upload_files 예시
+
+현재 설정:
+
+```bash
+chown -R agent-admin:agent-common upload_files
+chmod 770 upload_files
+```
+
+의 의미:
+
+```text
+owner = agent-admin
+group = agent-common
+permission = rwx rwx ---
+```
+
+---
+
+# 실제 접근 구조
+
+## agent-admin
+
+owner 권한으로 접근 가능.
+
+---
+
+## agent-common 그룹 사용자
+
+group 권한으로 접근 가능.
+
+현재:
+- agent-dev
+- agent-test
+
+등 접근 가능.
+
+---
+
+## others
+
+접근 불가능.
+
+---
+
+# 왜 group을 사용하는가
+
+Linux는:
+
+```text
+여러 사용자에게
+동일 권한 부여
+```
+
+를 효율적으로 하기 위해 group 개념을 사용한다.
+
+---
+
+# 현재 프로젝트 구조
+
+```text
+upload_files
+ ├── owner : agent-admin
+ └── group : agent-common
+```
+
+즉:
+
+```text
+agent-admin이 관리하지만,
+agent-common 그룹도 함께 접근 가능
+```
+
+한 구조.
+
+---
+
+# api_keys는 왜 다르게 설정했는가
+
+```bash
+chown -R agent-admin:agent-core api_keys
+chmod 770 api_keys
+```
+
+여기서는 group이:
+
+```text
+agent-core
+```
+
+이다.
+
+즉:
+- agent-common 전체 허용 X
+- 더 제한된 사용자만 허용
+
+구조.
+
+---
+
+# 현재 프로젝트의 핵심 개념
+
+현재 구조는:
+
+```text
+owner 기반 관리
++
+group 기반 협업 권한 부여
+```
+
+구조이다.
+
+즉:
+
+```text
+agent-admin이 소유
+→ 필요한 그룹만 접근 허용
+```
+
+하는 방식.
+
+---
+
+# 왜 이런 구조를 사용하는가
+
+실제 서버에서는:
+- 여러 사용자가 존재
+- 역할이 다름
+- 접근 가능한 데이터도 다름
+
+즉:
+
+```text
+공유는 하되,
+모든 사용자에게 다 열어두지는 않음
+```
+
+구조가 필요하다.
+
+---
+
+# 현재 프로젝트 흐름 정리
+
+```text
+디렉토리 생성
+        ↓
+owner 지정
+        ↓
+group 지정
+        ↓
+group 기반 접근 허용
+        ↓
+최소 권한 원칙 적용
+```
+
+---
+
+# 현재 프로젝트에서 역할별 접근 구조
+
+```text
+upload_files
+ → 협업 공간
+ → agent-common 접근 가능
+
+api_keys
+ → 민감 정보
+ → agent-core 접근 가능
+
+monitor.log
+ → 운영 로그
+ → agent-core 접근 가능
+```
+
+즉:
+
+```text
+데이터 중요도에 따라
+접근 범위를 다르게 설계
+```
+
+한 것이다.
+````
