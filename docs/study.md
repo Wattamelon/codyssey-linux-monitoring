@@ -3130,3 +3130,294 @@ monitor.log
 ```
 
 한 것이다.
+
+
+# owner와 group의 권한이 둘 다 7이면 완전히 같은가?
+
+현재 설정:
+
+```bash
+chown -R agent-admin:agent-common upload_files
+chmod 770 upload_files
+```
+
+의 의미:
+
+```text
+owner = agent-admin
+group = agent-common
+permission = rwx rwx ---
+```
+
+즉:
+
+| 대상 | 권한 |
+|---|---|
+| owner | rwx |
+| group | rwx |
+| others | --- |
+
+상태이다.
+
+겉보기에는:
+
+```text
+owner와 group 권한이 완전히 동일
+```
+
+해 보인다.
+
+실제로:
+- 읽기(read)
+- 쓰기(write)
+- 실행(execute)
+
+권한 자체는 동일하다.
+
+즉:
+- 파일 생성
+- 수정
+- 삭제
+- 디렉토리 접근
+
+등은 둘 다 가능하다.
+
+---
+
+# 그런데 owner가 특별한 이유
+
+Linux에서는:
+
+```text
+owner는 "진짜 소유자"
+```
+
+라는 개념이 존재한다.
+
+즉 단순 rwx 외에도 owner만 가능한 영역이 있다.
+
+---
+
+# owner만 가능한 대표적인 작업
+
+## chmod 가능
+
+파일 owner는:
+
+```bash
+chmod
+```
+
+를 통해 권한 변경 가능.
+
+group 사용자는:
+- rwx 권한이 있어도
+- 일반적으로 chmod 불가능.
+
+---
+
+# chown 가능
+
+owner 변경은 보통:
+- root
+- 일부 특수 권한 사용자
+
+만 가능.
+
+즉 group 사용자에게는 거의 허용되지 않는다.
+
+---
+
+# ACL 및 메타데이터 관리
+
+고급 권한 설정:
+- ACL
+- extended attribute
+
+등도 owner/root 중심 관리.
+
+---
+
+# Linux 내부 기준도 owner 우선
+
+Linux 권한 체크 순서는:
+
+```text
+owner 확인
+    ↓
+group 확인
+    ↓
+others 확인
+```
+
+순서이다.
+
+즉:
+
+```text
+현재 사용자가 owner이면
+group 권한은 아예 안 봄
+```
+
+---
+
+# 예시
+
+현재 구조:
+
+```text
+owner = agent-admin
+group = agent-common
+permission = 770
+```
+
+---
+
+# agent-admin 접근 시
+
+Linux는:
+
+```text
+"이 사용자는 owner네?"
+```
+
+라고 판단.
+
+즉:
+- owner 권한 적용
+- group 권한은 무시.
+
+---
+
+# agent-dev 접근 시
+
+agent-dev는 owner가 아니므로:
+
+```text
+group 권한 확인
+```
+
+으로 넘어간다.
+
+그리고:
+- agent-common 그룹 소속이면
+- group 권한 적용.
+
+---
+
+# 즉 핵심 차이
+
+## owner
+
+```text
+실제 소유자
+```
+
+---
+
+## group
+
+```text
+공동 접근 허용 대상
+```
+
+---
+
+# 현재 프로젝트 구조 관점
+
+현재 구조는:
+
+```text
+agent-admin이 실제 관리 책임자
+```
+
+라는 의미가 포함되어 있다.
+
+그리고:
+
+```text
+agent-common 그룹은 협업 접근 허용
+```
+
+개념.
+
+즉:
+
+```text
+소유자(owner)
++
+공유 그룹(group)
+```
+
+구조.
+
+---
+
+# 왜 이런 구조를 사용하는가
+
+실제 서버에서는:
+- 담당 관리자
+- 개발자
+- 운영자
+
+등 역할이 다르다.
+
+예:
+
+```text
+owner
+ → 실제 서비스 관리자
+
+group
+ → 공동 작업자
+```
+
+처럼 사용하는 경우 많다.
+
+---
+
+# owner와 group 권한이 같아도 owner가 중요한 이유
+
+현재는 둘 다:
+
+```text
+7 = rwx
+```
+
+지만,
+
+owner는:
+- 파일의 주체
+- 권한 기준점
+- 관리 책임자
+
+역할을 가진다.
+
+즉:
+
+```text
+권한 숫자는 같아도
+의미는 다르다
+```
+
+고 이해하는 게 중요하다.
+
+---
+
+# 현재 프로젝트에서의 의미
+
+```text
+upload_files
+ → agent-admin이 소유
+ → agent-common이 협업 접근
+
+api_keys
+ → agent-admin이 소유
+ → agent-core만 접근 허용
+```
+
+즉:
+- owner는 관리 책임자
+- group은 접근 허용 대상
+
+개념으로 설계한 구조이다.
