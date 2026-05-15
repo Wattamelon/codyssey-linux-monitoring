@@ -8210,6 +8210,499 @@ getfacl 이 훨씬 더 자세한 권한 정보 제공
 ```
 
 하게 된다.
+---
+
+# 환경 변수(Environment Variable)
+
+현재 프로젝트에서는:
+
+```bash
+export AGENT_HOME=/home/agent-admin/agent-app
+```
+
+같은 명령어를 사용하여 환경 변수를 설정하였다.
+
+---
+
+# 환경 변수란
+
+환경 변수(Environment Variable)는:
+
+```text
+Linux Shell 안에서 사용하는
+전역 변수
+```
+
+이다.
+
+즉:
+- 경로
+- 설정값
+- 포트 번호
+- 실행 환경 정보
+
+등을 저장하는 변수.
+
+---
+
+# export 의미
+
+```bash
+export 변수명=값
+```
+
+의 의미:
+
+```text
+현재 shell 환경에 변수 등록
+```
+
+하는 것.
+
+---
+
+# 현재 예시
+
+```bash
+export AGENT_HOME=/home/agent-admin/agent-app
+```
+
+의 의미:
+
+```text
+AGENT_HOME 변수에
+/home/agent-admin/agent-app 저장
+```
+
+.
+
+---
+
+# export 하면 실제로 무슨 일이 일어나는가
+
+현재 shell 프로세스 내부에:
+
+```text
+AGENT_HOME
+```
+
+이라는 환경 변수가 등록된다.
+
+즉 shell 메모리 내부에:
+
+```text
+AGENT_HOME=/home/agent-admin/agent-app
+```
+
+정보 저장.
+
+---
+
+# 이후 어떻게 사용하는가
+
+이후 shell에서는:
+
+```bash
+$AGENT_HOME
+```
+
+으로 참조 가능.
+
+예:
+
+```bash
+echo $AGENT_HOME
+```
+
+출력:
+
+```text
+/home/agent-admin/agent-app
+```
+
+.
+
+---
+
+# 왜 $를 붙이는가
+
+Linux shell에서:
+
+```bash
+$변수명
+```
+
+은:
+
+```text
+변수 값 가져오기
+```
+
+의미.
+
+---
+
+# 현재 프로젝트에서 설정한 환경 변수들
+
+## AGENT_HOME
+
+```bash
+export AGENT_HOME=/home/agent-admin/agent-app
+```
+
+애플리케이션 루트 디렉토리.
+
+---
+
+# AGENT_PORT
+
+```bash
+export AGENT_PORT=15034
+```
+
+서비스 포트 번호.
+
+---
+
+# AGENT_UPLOAD_DIR
+
+```bash
+export AGENT_UPLOAD_DIR=$AGENT_HOME/upload_files
+```
+
+업로드 디렉토리 경로.
+
+---
+
+# 여기서 중요한 점
+
+```bash
+$AGENT_HOME
+```
+
+를 재사용했다.
+
+즉:
+
+```text
+변수를 이용해 다른 변수 생성
+```
+
+가능.
+
+---
+
+# 실제 결과
+
+현재:
+
+```text
+AGENT_HOME=/home/agent-admin/agent-app
+```
+
+이므로:
+
+```text
+AGENT_UPLOAD_DIR
+=
+/home/agent-admin/agent-app/upload_files
+```
+
+가 된다.
+
+---
+
+# AGENT_KEY_PATH
+
+```bash
+export AGENT_KEY_PATH=$AGENT_HOME/api_keys/t_secret.key
+```
+
+Secret Key 파일 위치 저장.
+
+---
+
+# AGENT_LOG_DIR
+
+```bash
+export AGENT_LOG_DIR=/var/log/agent-app
+```
+
+로그 디렉토리 위치 저장.
+
+---
+
+# echo 로 확인
+
+```bash
+echo $AGENT_HOME
+```
+
+의 의미:
+
+```text
+환경 변수 값 출력
+```
+
+.
+
+---
+
+# 왜 환경 변수를 사용하는가
+
+현재 프로젝트 핵심은:
+
+```text
+경로 하드코딩 방지
+```
+
+이다.
+
+---
+
+# 하드코딩 문제
+
+예를 들어 코드 곳곳에:
+
+```bash
+/home/agent-admin/agent-app
+```
+
+를 직접 반복 작성하면:
+
+- 경로 변경 어려움
+- 유지보수 어려움
+- 재사용 어려움
+
+문제 발생.
+
+---
+
+# 환경 변수 사용 장점
+
+예:
+
+```bash
+$AGENT_HOME
+```
+
+를 사용하면:
+
+- 경로 변경 쉬움
+- 코드 재사용 가능
+- 환경 이동 쉬움
+
+장점 존재.
+
+---
+
+# 실제 운영 서버에서 환경 변수 활용 예시
+
+실무에서는:
+- DB 주소
+- API Key
+- PORT
+- SECRET
+- ENV 설정
+
+등을 환경 변수로 관리하는 경우 많다.
+
+예:
+
+```bash
+export DB_HOST=localhost
+export DB_PORT=3306
+```
+
+.
+
+---
+
+# 환경 변수는 어디까지 유지되는가
+
+중요한 점:
+
+```text
+현재 shell 세션까지만 유지
+```
+
+된다.
+
+즉 터미널 종료하면 사라진다.
+
+---
+
+# 왜 사라지는가
+
+현재 export는:
+
+```text
+현재 shell 프로세스 메모리
+```
+
+에만 등록되기 때문이다.
+
+---
+
+# 영구 저장하려면?
+
+보통:
+
+```text
+~/.bashrc
+~/.profile
+/etc/environment
+```
+
+등에 저장.
+
+---
+
+# 현재 프로젝트에서는 왜 export만 사용했는가
+
+현재 목적은:
+
+```text
+환경 변수 개념 학습
+```
+
+이기 때문이다.
+
+즉:
+- shell 변수
+- 환경 변수 참조
+- 경로 재사용
+
+개념 이해 목적.
+
+---
+
+# 키 파일 생성 부분 설명
+
+```bash
+echo "agent_api_key_test" > /home/agent-admin/agent-app/api_keys/t_secret.key
+```
+
+---
+
+# 의미
+
+```text
+t_secret.key 파일 생성
++
+문자열 저장
+```
+
+.
+
+---
+
+# 현재 프로젝트에서 역할
+
+현재 프로젝트에서는:
+- 실제 인증 사용 목적 X
+- 보안 파일 관리 구조 연습 목적.
+
+---
+
+# chown 설정
+
+```bash
+chown agent-admin:agent-core t_secret.key
+```
+
+의 의미:
+
+```text
+owner = agent-admin
+group = agent-core
+```
+
+설정.
+
+---
+
+# chmod 660
+
+```bash
+chmod 660 t_secret.key
+```
+
+의 의미:
+
+```text
+rw- rw- ---
+```
+
+.
+
+즉:
+- owner 읽기/쓰기 가능
+- group 읽기/쓰기 가능
+- others 접근 불가.
+
+---
+
+# ls -l 결과 해석
+
+```text
+-rw-rw---- 1 agent-admin agent-core ...
+```
+
+---
+
+# 의미
+
+| 부분 | 의미 |
+|---|---|
+| - | 일반 파일 |
+| rw-rw---- | 권한 |
+| agent-admin | owner |
+| agent-core | group |
+
+---
+
+# 현재 프로젝트 전체 흐름
+
+```text
+환경 변수 설정
+        ↓
+경로/포트/로그 위치 관리
+        ↓
+Secret Key 파일 생성
+        ↓
+권한 제한
+        ↓
+민감 정보 보호 구조 구성
+```
+
+---
+
+# 현재 프로젝트 핵심 개념
+
+현재 단계는:
+
+```text
+실행 환경 정보를
+환경 변수로 관리
+```
+
+하는 구조와,
+
+```text
+민감 정보 파일을
+권한 기반으로 보호
+```
+
+하는 구조를 학습하는 과정이다.
+
+즉:
+- Linux 환경 변수
+- Shell 변수 참조
+- 운영 환경 구성
+- Secret 관리 기초
+
+개념을 실제로 경험한 단계이다.
 
 ---
 # 과제목표
