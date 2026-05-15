@@ -95,7 +95,7 @@ root@4d39a92c9967:/#
 ```bash
 tail -n 20 /var/log/agent-app/monitor.log
 
-trouble_3.md
+--- 트러블 슈팅 발생 (trouble_3.md)
 
 root@4d39a92c9967:/# tail -n 20 /var/log/agent-app/monitor.log
 [2026-05-13 15:52:07] PID:5051
